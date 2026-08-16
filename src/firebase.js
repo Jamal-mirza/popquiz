@@ -25,10 +25,26 @@ export function initFirebase(config) {
   }
 }
 
-// Retrieve the database instance, attempting to auto-load from localStorage if available
+// Retrieve the database instance, checking environment variables first (for Vercel), then localStorage
 export function getDb() {
   if (db) return db;
 
+  // 1. Check for Vite environment variables (ideal for automated production deployment)
+  const envConfig = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID
+  };
+
+  if (envConfig.apiKey && envConfig.projectId && envConfig.appId) {
+    const initializedDb = initFirebase(envConfig);
+    if (initializedDb) return initializedDb;
+  }
+
+  // 2. Fall back to manual localStorage settings
   const savedConfig = localStorage.getItem("firebase_config");
   if (savedConfig) {
     try {
